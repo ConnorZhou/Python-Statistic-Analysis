@@ -1,0 +1,241 @@
+软件环境的准备
+
+#引入Pandas包，作为数据底层
+import pandas as pd
+
+#调用scipy中的stats包，用ss来代替他
+import scipy.stats as ss
+
+# 导入matplotlib，用于统计绘图，
+import matplotlib
+
+#解决绘图时的中英文兼容问题
+#inline是解决它和jupyternotebook的兼容问题，直接让绘制的图形在jupyternotebook上显示
+%matplotlib inline
+
+#字体问题，直接让它转换成黑体，使得中文不会无法显示
+matplotlib.rcParams['font.sans-serif']=['SimHei']
+
+
+
+
+ccss=pd.read_excel("D:\Python\Python statistical analysis\Chapter 1\CCSS_sample\CCSS_sample.xlsx",sheet_name='CCSS')
+ccss.head()
+
+
+
+
+
+
+案例：消费者信心指数
+
+
+
+1 变量的统计描述
+
+
+
+
+1.1 中国消费者信心指数项目概况
+
+
+1.2 连续变量的统计描述
+
+numpy中内置了诸如mean,median等汇总函数，但是基于pandas框架的变量统计描述更为方便和灵活
+
+1.2.1 直接使用汇总函数
+
+
+
+print(ccss.median())
+ccss.s3.mean()
+
+
+
+#注意可能有输出混乱的函数
+ccss.sum()
+
+
+
+#案例分组时的统计描述
+ccss.groupby('s0').mean()
+#用groupby命令按照s0分组，然后求均值
+
+
+
+ccss.groupby('s0').s3.mean()
+#指定对s3求均值
+
+
+
+ccss.groupby('s0')['s3','index1'] .mean()
+# 按照s0进行分组，指定对s3和index1求均数
+
+
+
+ccss.s3.plot.hist()
+#针对年龄s3做一个直方图，看分布情况
+
+
+
+ccss.s3.plot.box()
+#针对年龄s3做一个箱图，看分布情况
+
+
+
+
+
+
+1.2.2 describe命令
+
+
+
+一次性输出常用的集中趋势和离散趋势汇总指标。（方便我们高效率的对多个变量的多种趋势进行观察）
+
+
+百分位数的输出为其特色功能。
+
+
+
+
+ccss.describe()
+
+
+
+#案例分组时的统计描述
+ccss.groupby('s0').s3.describe(percentiles=[.05,.1])
+#针对s0进行分组，对s3进行输出5%和10%的百分位数
+#count：频数
+#mean：均值
+#std：标准差
+
+
+
+
+
+
+1.2.3 statsmodels的实现方式
+
+
+
+statsmodels中的统计描述对数据格式的要求更严格，但功能更强。
+
+
+
+
+DescrStatsW类不仅可以用于进行变量的统计描述，更是进一步进行各种比较的基础对象。
+
+
+
+
+
+#引入环境
+from statsmodels.stats import weightstats as ws
+
+des=ws.DescrStatsW(ccss.loc[:,['index1','index1a','index1b']])
+# ccss.loc: 用索引来定位所有的行和指定的这三列
+des.nobs # 无参函数不能写括号，否则报错
+
+
+
+des.mean()#无参函数不能写括号，否则报错
+
+
+
+des.quantile([.05,.1,.5,.9,.95])
+# 计算5%，10%，50%，90%，95%的百分位数
+
+
+
+print(des.mean)
+#计算均数
+des.var
+# 计算方差
+
+
+
+# 混入字符串变量时会出错
+des=ws.DescrStatsW(ccss)
+des.var
+
+
+
+
+1.3 分类变量的统计描述
+
+Python目前尚未对多选题的统计描述提供任何支持，因此只能按照多个离散变量的方式来对多选题数据进行分析。
+
+
+
+1.3.1 单变量的频数统计
+
+
+
+ccss.time.value_counts()
+
+
+
+ccss.s3.value_counts()# 数值变量也可直接列出频数表
+
+
+
+ccss.s3.value_counts(bins=20)
+#分为20段
+
+
+
+ccss.s5.value_counts(True)
+#相应的构成比
+
+
+
+ccss.s5.value_counts().plot.bar()
+
+
+
+ccss.s5.value_counts().plot.pie()
+
+
+
+
+
+
+1.3.2 交叉表
+
+pandas的crosstab命令可以完成基本的制表任务，但是和统计软件中的同类命令不同，缺少进行行列变量关联性检验的功能，这方面的任务需要使用statsmodels完成
+
+
+pd.crosstab( 行列设定 index/columns:行变量/列变量，多个时以list形式提供 rownames/colnames=None：交叉表的行列名称 单元格设定 values:在单元格中需要汇总的变量列，需要进一步制定aggfunc aggfunc：相应的汇总函数 行列百分比计算 normalize=False:{'all','index','columns'},or{0,1} 'all'/ True : 总计百分比 'index'/ 0 : 分行计算百分比 'columns'/ 1 ： 分列计算百分比/ 1 ： 分列计算百分比 汇总设定 margins=False：是否加入行列汇总 margins_name='All':汇总行/列的名称 dropna=True： ）
+
+
+
+
+pd.crosstab(ccss.s2,ccss.s0)
+#以s2和s0做交叉表
+
+
+
+pd.crosstab(ccss.s2,ccss.s0,normalize=0,margins=True)
+
+
+
+pd.crosstab([ccss.s2,ccss.O1],ccss.s0)
+
+
+
+pd.crosstab([ccss.s2,ccss.O1],[ccss.s0,ccss.s5])
+
+
+
+pd.crosstab(ccss.s2,ccss.s0).plot.bar()
+
+
+
+pd.crosstab(ccss.s2,ccss.s0).plot.bar(stacked=True)
+
+
+
+pd.crosstab(ccss.s2,ccss.s0,normalize=0).plot.bar(stacked=True)
+
+
+
